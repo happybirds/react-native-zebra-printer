@@ -33,6 +33,7 @@ import com.zebra.sdk.printer.ZebraPrinterFactory;
 import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
 import com.zebra.sdk.printer.discovery.BluetoothDiscoverer;
 import com.zebra.sdk.printer.discovery.DiscoveryHandler;
+import com.zebra.sdk.printer.discovery.DiscoveredPrinter;
 
 import static com.cyclelution.RCTZebraBTPrinter.RCTZebraBTPrinterPackage.TAG;
 
@@ -72,7 +73,7 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
           WritableMap printerInfo = new WritableNativeMap();
           printerInfo.putString("type", "Bluetooth");
           printerInfo.putString("address", printer.address);
-          printers.add(printerInfo);
+          printers.pushMap(printerInfo);
         }
       };
 
