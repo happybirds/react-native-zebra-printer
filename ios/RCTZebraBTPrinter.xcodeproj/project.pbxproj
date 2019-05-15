@@ -177,6 +177,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 58B511D21A9E6C8500147676;
@@ -287,8 +288,9 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../../React/**",
-					"$(SRCROOT)/../../react-native/React/**",
+					"$(inherited)",
+					"$(SRCROOT)/../../../React",
+					"$(SRCROOT)/../../react-native/React",
 					"$(SRCROOT)/Libraries",
 					"$(SRCROOT)/Frameworks",
 				);
@@ -312,8 +314,9 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				HEADER_SEARCH_PATHS = (
-					"$(SRCROOT)/../../../React/**",
-					"$(SRCROOT)/../../react-native/React/**",
+					"$(inherited)",
+					"$(SRCROOT)/../../../React",
+					"$(SRCROOT)/../../react-native/React",
 					"$(SRCROOT)/Libraries",
 					"$(SRCROOT)/Frameworks",
 				);
