@@ -50,7 +50,7 @@ RCT_EXPORT_METHOD(
         }
 
         resolve((id)printers);
-    }
+    });
 }
 
 RCT_EXPORT_METHOD(
@@ -72,7 +72,7 @@ RCT_EXPORT_METHOD(
 
             if(success == YES){
                 NSString *printLabel;
-                printLabel = [NSString stringWithFormat: @"! %@", userCommand];
+                printLabel = [NSString stringWithFormat: @"! %@", command];
                 NSError *error = nil;
                 success = success && [thePrinterConn write:[printLabel dataUsingEncoding:NSUTF8StringEncoding] error:&error];
 
