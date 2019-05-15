@@ -81,9 +81,9 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void printLabel(WritableMap printerInfo, String command, Promise response) {
 
-      if (printerInfo.getString('type') == 'Bluetooth') {
+      if ("Bluetooth".equals(printerInfo.getString("type"))) {
         printerConnection = null;
-        printerConnection = new BluetoothConnection(printerInfo.getString('address'));
+        printerConnection = new BluetoothConnection(printerInfo.getString("address"));
 
         try {
           printerConnection.open();
