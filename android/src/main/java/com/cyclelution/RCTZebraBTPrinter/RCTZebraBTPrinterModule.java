@@ -58,8 +58,8 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod 
-    public void portDiscovery(String type, Promise response) {
-      WritableArray printers = new WritableNativeArray();
+    public void portDiscovery(String type, final Promise response) {
+      final WritableArray printers = new WritableNativeArray();
       DiscoveryHandler handle = new DiscoveryHandler() {
         public void discoveryError(String message) {
           //
@@ -77,7 +77,11 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
         }
       };
 
-      BluetoothDiscoverer.findPrinters(reactContext, handle);
+      try {
+        BluetoothDiscoverer.findPrinters(reactContext, handle);
+      } catch (ConnectionException e) {
+        if (D) Log.d(TAG, "Failed to find bluetooth printers");
+      }
     }
 
     @ReactMethod
