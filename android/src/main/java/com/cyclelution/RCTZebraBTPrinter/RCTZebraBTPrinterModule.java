@@ -32,6 +32,7 @@ import com.zebra.sdk.printer.ZebraPrinter;
 import com.zebra.sdk.printer.ZebraPrinterFactory;
 import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
 import com.zebra.sdk.printer.discovery.BluetoothDiscoverer;
+import com.zebra.sdk.printer.discovery.DeviceFilter;
 import com.zebra.sdk.printer.discovery.DiscoveryHandler;
 import com.zebra.sdk.printer.discovery.DiscoveredPrinter;
 
