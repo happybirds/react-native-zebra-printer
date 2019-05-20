@@ -24,6 +24,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 
+import com.zebra.sdk.comm.BluetoothConnection;
 import com.zebra.sdk.comm.BluetoothConnectionInsecure;
 import com.zebra.sdk.comm.Connection;
 import com.zebra.sdk.comm.ConnectionException;
