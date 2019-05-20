@@ -15,6 +15,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableNativeArray;
@@ -95,7 +96,7 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void printLabel(WritableMap printerInfo, String command, Promise response) {
+    public void printLabel(ReadableMap printerInfo, String command, Promise response) {
 
       if ("Bluetooth".equals(printerInfo.getString("type"))) {
         printerConnection = null;
