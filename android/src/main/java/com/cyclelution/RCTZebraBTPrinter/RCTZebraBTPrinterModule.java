@@ -62,65 +62,64 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
 
     @ReactMethod 
     public void portDiscovery(String type, final Promise response) {
-      final WritableArray printers = new WritableNativeArray();
-      DiscoveryHandler handle = new DiscoveryHandler() {
-        public void discoveryError(String message) {
-          if (D) Log.d(TAG, "Bluetooth discovery erroed");
+      new Thread(new Runnable() {
+        public void run() {
+          try {
+            if (D) Log.d(TAG, "Looking for printers");
+            final WritableArray printers = new WritableNativeArray();
+            BluetoothDiscoverer.findPrinters(reactContext, new DiscoveryHandler() {
+              public void discoveryError(String message) {
+                if (D) Log.d(TAG, "Bluetooth discovery erroed");
+              }
+      
+              public void discoveryFinished() {
+                if (D) Log.d(TAG, "Bluetooth discovery finished");
+                response.resolve(printers);
+              }
+      
+              public void foundPrinter(DiscoveredPrinter printer) {
+                if (D) Log.d(TAG, "Bluetooth discovery has found a printer");
+                WritableMap printerInfo = new WritableNativeMap();
+                printerInfo.putString("type", "Bluetooth");
+                printerInfo.putString("address", printer.address);
+                printers.pushMap(printerInfo);
+              }
+            });
+          } catch (ConnectionException e) {
+            if (D) Log.d(TAG, "Failed to find bluetooth printers");
+          }
         }
-
-        public void discoveryFinished() {
-          if (D) Log.d(TAG, "Bluetooth discovery finished");
-          response.resolve(printers);
-        }
-
-        public void foundPrinter(DiscoveredPrinter printer) {
-          if (D) Log.d(TAG, "Bluetooth discovery has found a printer");
-          WritableMap printerInfo = new WritableNativeMap();
-          printerInfo.putString("type", "Bluetooth");
-          printerInfo.putString("address", printer.address);
-          printers.pushMap(printerInfo);
-        }
-      };
-
-      DeviceFilter filter = new DeviceFilter() {
-        public boolean shouldAddPrinter(BluetoothDevice device) {
-          return true;
-        }
-      };
-
-      try {
-        if (D) Log.d(TAG, "Looking for printers");
-        BluetoothDiscoverer.findPrinters(reactContext, handle, filter);
-      } catch (ConnectionException e) {
-        if (D) Log.d(TAG, "Failed to find bluetooth printers");
-      }
+      }).start();
     }
 
     @ReactMethod
     public void printLabel(ReadableMap printerInfo, String command, Promise response) {
+      new Thread(new Runnable() {
+        public void run() {
+          if ("Bluetooth".equals(printerInfo.getString("type"))) {
+            printerConnection = null;
+            printerConnection = new BluetoothConnectionInsecure(printerInfo.getString("address"));
 
-      if ("Bluetooth".equals(printerInfo.getString("type"))) {
-        printerConnection = null;
-        printerConnection = new BluetoothConnectionInsecure(printerInfo.getString("address"));
-
-        try {
-          printerConnection.open();
-          try {
-              printerConnection.write(command.getBytes());
-              if (printerConnection instanceof BluetoothConnection) {
-                  String friendlyName = ((BluetoothConnection) printerConnection).getFriendlyName();
-                  if (D) Log.d(TAG, "printLabel printed with " + friendlyName);
+            try {
+              printerConnection.open();
+              try {
+                  printerConnection.write(command.getBytes());
+                  if (printerConnection instanceof BluetoothConnection) {
+                      String friendlyName = ((BluetoothConnection) printerConnection).getFriendlyName();
+                      if (D) Log.d(TAG, "printLabel printed with " + friendlyName);
+                  }
+              } catch (ConnectionException e) {
+                response.resolve(false);
+              } finally {
+                printerConnection.close();
+                response.resolve(true);
               }
-          } catch (ConnectionException e) {
-            response.resolve(false);
-          } finally {
-            printerConnection.close();
-            response.resolve(true);
-          }
-        } catch ( ConnectionException e) {
-          response.resolve(false);
+            } catch ( ConnectionException e) {
+              response.resolve(false);
+            }
+          }  
         }
-      }  
+      }).start();          
     }
 
     @Override
