@@ -62,14 +62,16 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
       final WritableArray printers = new WritableNativeArray();
       DiscoveryHandler handle = new DiscoveryHandler() {
         public void discoveryError(String message) {
-          //
+          if (D) Log.d(TAG, "Bluetooth discovery erroed");
         }
 
         public void discoveryFinished() {
+          if (D) Log.d(TAG, "Bluetooth discovery finished");
           response.resolve(printers);
         }
 
         public void foundPrinter(DiscoveredPrinter printer) {
+          if (D) Log.d(TAG, "Bluetooth discovery has found a printer");
           WritableMap printerInfo = new WritableNativeMap();
           printerInfo.putString("type", "Bluetooth");
           printerInfo.putString("address", printer.address);
@@ -78,6 +80,7 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
       };
 
       try {
+        if (D) Log.d(TAG, "Looking for printers");
         BluetoothDiscoverer.findPrinters(reactContext, handle);
       } catch (ConnectionException e) {
         if (D) Log.d(TAG, "Failed to find bluetooth printers");
