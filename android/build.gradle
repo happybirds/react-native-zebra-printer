@@ -36,5 +36,5 @@ repositories {
 dependencies {
     compile 'com.facebook.react:react-native:+'
     compile files('libs/ZSDK_ANDROID_API.jar')
-    compile files('libs/ZSDK_ANDROID_BLTE.jar')
+    compile files('libs/ZSDK_ANDROID_BTLE.jar')
 }
