@@ -24,6 +24,9 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 
+import com.zebra.sdk.btleComm.BluetoothLeConnection;
+import com.zebra.sdk.btleComm.BluetoothLeDiscoverer;
+
 import com.zebra.sdk.comm.BluetoothConnection;
 import com.zebra.sdk.comm.BluetoothConnectionInsecure;
 import com.zebra.sdk.comm.Connection;
@@ -36,6 +39,7 @@ import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
 import com.zebra.sdk.printer.discovery.BluetoothDiscoverer;
 import com.zebra.sdk.printer.discovery.DeviceFilter;
 import com.zebra.sdk.printer.discovery.DiscoveryHandler;
+import com.zebra.sdk.printer.discovery.DiscoveryHandlerLinkOsOnly;
 import com.zebra.sdk.printer.discovery.DiscoveredPrinter;
 
 import static com.cyclelution.RCTZebraBTPrinter.RCTZebraBTPrinterPackage.TAG;
@@ -65,9 +69,8 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
       new Thread(new Runnable() {
         public void run() {
           try {
-            if (D) Log.d(TAG, "Looking for printers");
             final WritableArray printers = new WritableNativeArray();
-            BluetoothDiscoverer.findPrinters(reactContext, new DiscoveryHandler() {
+            DiscoveryHandler handler = new DiscoveryHandler() {
               public void discoveryError(String message) {
                 if (D) Log.d(TAG, "Bluetooth discovery erroed");
               }
@@ -84,8 +87,10 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
                 printerInfo.putString("address", printer.address);
                 printers.pushMap(printerInfo);
               }
-            });
-          } catch (ConnectionException e) {
+            };
+            if (D) Log.d(TAG, "Looking for printers");
+            BluetoothLeDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
+          } catch (Exception e) {
             if (D) Log.d(TAG, "Failed to find bluetooth printers");
           }
         }
@@ -98,16 +103,16 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
         public void run() {
           if ("Bluetooth".equals(printerInfo.getString("type"))) {
             printerConnection = null;
-            printerConnection = new BluetoothConnectionInsecure(printerInfo.getString("address"));
+            printerConnection = new BluetoothLeConnection(printerInfo.getString("address"), reactContext);
 
             try {
               printerConnection.open();
               try {
-                  printerConnection.write(command.getBytes());
-                  if (printerConnection instanceof BluetoothConnection) {
-                      String friendlyName = ((BluetoothConnection) printerConnection).getFriendlyName();
-                      if (D) Log.d(TAG, "printLabel printed with " + friendlyName);
-                  }
+                printerConnection.write(command.getBytes());
+                if (printerConnection instanceof BluetoothConnection) {
+                  String friendlyName = ((BluetoothConnection) printerConnection).getFriendlyName();
+                  if (D) Log.d(TAG, "printLabel printed with " + friendlyName);
+                }
               } catch (ConnectionException e) {
                 response.resolve(false);
               } finally {
