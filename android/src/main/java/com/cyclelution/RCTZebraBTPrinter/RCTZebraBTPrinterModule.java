@@ -5,7 +5,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import android.app.Activity;
-
+import android.bluetooth.BluetoothDevice;
 import android.util.Log;
 import android.util.Base64;
 
@@ -79,9 +79,15 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
         }
       };
 
+      DeviceFilter filter = new DeviceFilter() {
+        public boolean shouldAddPrinter(BluetoothDevice device) {
+          return true;
+        }
+      };
+
       try {
         if (D) Log.d(TAG, "Looking for printers");
-        BluetoothDiscoverer.findPrinters(reactContext, handle);
+        BluetoothDiscoverer.findPrinters(reactContext, handle, filter);
       } catch (ConnectionException e) {
         if (D) Log.d(TAG, "Failed to find bluetooth printers");
       }
