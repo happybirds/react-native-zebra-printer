@@ -24,7 +24,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.bridge.Callback;
 
-import com.zebra.sdk.comm.BluetoothConnection;
+import com.zebra.sdk.comm.BluetoothConnectionInsecure;
 import com.zebra.sdk.comm.Connection;
 import com.zebra.sdk.comm.ConnectionException;
 
@@ -100,24 +100,10 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
 
       if ("Bluetooth".equals(printerInfo.getString("type"))) {
         printerConnection = null;
-        printerConnection = new BluetoothConnection(printerInfo.getString("address"));
+        printerConnection = new BluetoothConnectionInsecure(printerInfo.getString("address"));
 
         try {
           printerConnection.open();
-          ZebraPrinter printer = null;
-          if(printerConnection.isConnected()) {
-            try {
-              printer = ZebraPrinterFactory.getInstance(printerConnection);
-              PrinterLanguage pl = printer.getPrinterControlLanguage();
-            } catch (ConnectionException e) {
-                if (D) Log.d(TAG, "printLabel com failed to open 2nd stage");
-                printer = null;
-            } catch (ZebraPrinterLanguageUnknownException e) {
-                if (D) Log.d(TAG, "printLabel print language get failed");
-                printer = null;
-            }
-          }
-
           try {
               printerConnection.write(command.getBytes());
               if (printerConnection instanceof BluetoothConnection) {
