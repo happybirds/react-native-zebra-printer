@@ -93,7 +93,7 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void printLabel(ReadableMap printerInfo, String command, Promise response) {
+    public void printLabel(final ReadableMap printerInfo, final String command, final Promise response) {
       new Thread(new Runnable() {
         public void run() {
           if ("Bluetooth".equals(printerInfo.getString("type"))) {
