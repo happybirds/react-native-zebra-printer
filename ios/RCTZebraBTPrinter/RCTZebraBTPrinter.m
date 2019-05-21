@@ -52,13 +52,14 @@ RCT_EXPORT_METHOD(
             }
         }
 
+        NSError *error = nil;
         NSArray *networkPrinters = [NetworkDiscoverer localBroadcast:&error];
         if (error == nil) {
             for (DiscoveredPrinterNetwork *networkPrinter in networkPrinters) {
                 NSMutableDictionary *printer = [[NSMutableDictionary alloc] init];
                 printer[@"type"] = @"TCP";
                 printer[@"address"] = networkPrinter.address;
-                printer[@"port"] = networkPrinter.port;
+                printer[@"port"] = [NSNumber numberWithLong:networkPrinter.port];
                 [printers addObject: printer];
             }
         }
