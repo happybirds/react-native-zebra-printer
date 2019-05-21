@@ -46,6 +46,8 @@ import com.zebra.sdk.printer.discovery.DiscoveredPrinterBluetooth;
 import com.zebra.sdk.printer.discovery.DiscoveredPrinterNetwork;
 import com.zebra.sdk.printer.discovery.NetworkDiscoverer;
 
+import android.os.Looper;
+
 import static com.cyclelution.RCTZebraBTPrinter.RCTZebraBTPrinterPackage.TAG;
 
 @SuppressWarnings("unused")
@@ -85,7 +87,6 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
               }
       
               public void foundPrinter(DiscoveredPrinter printer) {
-                if (D) Log.d(TAG, "Bluetooth discovery has found a printer");
                 String type = "";
                 if (printer instanceof DiscoveredPrinterBluetooth) 
                   type = "BT";
@@ -97,17 +98,21 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
                 printerInfo.putString("type", type);
                 printerInfo.putString("address", printer.address);
                 printers.pushMap(printerInfo);
+                if (D) Log.d(TAG, "Bluetooth discovery has found a printer connected over " + type + " at " + printer.address);
               }
             };
             if (D) Log.d(TAG, "Looking for printers");
+            Looper.prepare();
             if ("BT".equals(type)) 
-              BluetoothDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
+              BluetoothDiscoverer.findPrinters(reactContext, handler);
             else if ("BTLE".equals(type)) 
-              BluetoothLeDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
+              BluetoothLeDiscoverer.findPrinters(reactContext, handler);
             else if ("TCP".equals(type)) 
-              NetworkDiscoverer.findPrinters(new DiscoveryHandlerLinkOsOnly(handler));
+              NetworkDiscoverer.findPrinters(handler);
           } catch (Exception e) {
             if (D) Log.d(TAG, "Failed to find bluetooth printers");
+          } finally {
+            Looper.myLooper().quit();
           }
         }
       }).start();
