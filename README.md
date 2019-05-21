@@ -43,7 +43,7 @@ API:
 
 | Method        | Description   |
 | ------------- | ------------- |
-| `printLabel(printerSerial, userCommand)`  | Prints data on zebra bt printer. `userCommand` is presented in CPCL printer programming language. Returns a promise with result  |
+| `printLabel(printer, command)`  | Prints data on zebra bt printer. `command` is presented in CPCL printer programming language. Returns a promise with result  |
 
 You must pair your printer first with the device.
 

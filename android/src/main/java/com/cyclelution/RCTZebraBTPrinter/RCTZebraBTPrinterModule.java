@@ -69,7 +69,7 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod 
-    public void portDiscovery(String type, final Promise response) {
+    public void portDiscovery(final String type, final Promise response) {
       new Thread(new Runnable() {
         public void run() {
           try {
@@ -89,7 +89,7 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
                 String type = "";
                 if (printer instanceof DiscoveredPrinterBluetooth) 
                   type = "BT";
-                else if (orinter instanceof DiscoveredPrinterBluetoothLe)
+                else if (printer instanceof DiscoveredPrinterBluetoothLe)
                   type = "BTLE";
                 else if (printer instanceof DiscoveredPrinterNetwork) 
                   type = "TCP";
@@ -100,11 +100,11 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
               }
             };
             if (D) Log.d(TAG, "Looking for printers");
-            if ("BT".equals(printerInfo.getString("type"))) 
+            if ("BT".equals(type)) 
               BluetoothDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
-            if ("BTLE".equals(printerInfo.getString("type"))) 
+            else if ("BTLE".equals(type)) 
               BluetoothLeDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
-            if ("TCP".equals(printerInfo.getString("type"))) 
+            else if ("TCP".equals(type)) 
               NetworkDiscoverer.findPrinters(new DiscoveryHandlerLinkOsOnly(handler));
           } catch (Exception e) {
             if (D) Log.d(TAG, "Failed to find bluetooth printers");
@@ -120,9 +120,9 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
           printerConnection = null;
           if ("BT".equals(printerInfo.getString("type"))) 
             printerConnection = new BluetoothConnection(printerInfo.getString("address"));
-          if ("BTLE".equals(printerInfo.getString("type"))) 
+          else if ("BTLE".equals(printerInfo.getString("type"))) 
             printerConnection = new BluetoothLeConnection(printerInfo.getString("address"), reactContext);
-          if ("TCP".equals(printerInfo.getString("type"))) 
+          else if ("TCP".equals(printerInfo.getString("type"))) 
             printerConnection = new TcpConnection(printerInfo.getString("address"), TcpConnection.DEFAULT_ZPL_TCP_PORT);
 
           try {
