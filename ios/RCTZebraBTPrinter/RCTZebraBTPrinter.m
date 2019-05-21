@@ -14,6 +14,9 @@
 #import "ZebraPrinter.h"
 #import "ZebraPrinterFactory.h"
 #import "MfiBtPrinterConnection.h"
+#import "TcpPrinterConnection.h"
+#import "NetworkDiscoverer.h"
+#import "DiscoveredPrinterNetwork.h"
 #import <SGD.h>
 
 @interface RCTZebraBTPrinter ()
@@ -43,8 +46,19 @@ RCT_EXPORT_METHOD(
         for (EAAccessory *accessory in connectedAccessories) {
             if([accessory.protocolStrings indexOfObject:@"com.zebra.rawport"] != NSNotFound){
                 NSMutableDictionary *printer = [[NSMutableDictionary alloc] init];
-                printer[@"type"] = @"Bluetooth";
+                printer[@"type"] = @"BT";
                 printer[@"address"] = accessory.serialNumber;
+                [printers addObject: printer];
+            }
+        }
+
+        NSArray *networkPrinters = [NetworkDiscoverer localBroadcast:&error];
+        if (error == nil) {
+            for (DiscoveredPrinterNetwork *networkPrinter in networkPrinters) {
+                NSMutableDictionary *printer = [[NSMutableDictionary alloc] init];
+                printer[@"type"] = @"TCP";
+                printer[@"address"] = networkPrinter.address;
+                printer[@"port"] = networkPrinter.port;
                 [printers addObject: printer];
             }
         }
@@ -65,80 +79,34 @@ RCT_EXPORT_METHOD(
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^ {
 
-        if([printer valueForKey:@"type"] == @"Bluetooth") {
-            id<ZebraPrinterConnection, NSObject> thePrinterConn = [[MfiBtPrinterConnection alloc] initWithSerialNumber:[printer valueForKey:@"address"]];
+        id<ZebraPrinterConnection, NSObject> thePrinterConn = nil;
+        if([printer valueForKey:@"type"] == @"BT") {
+            thePrinterConn = [[MfiBtPrinterConnection alloc] initWithSerialNumber:[printer valueForKey:@"address"]];
             [((MfiBtPrinterConnection*)thePrinterConn) setTimeToWaitAfterWriteInMilliseconds:30];
-            BOOL success = [thePrinterConn open];
-
-            if(success == YES){
-                NSString *printLabel;
-                printLabel = [NSString stringWithFormat: @"! %@", command];
-                NSError *error = nil;
-                success = success && [thePrinterConn write:[printLabel dataUsingEncoding:NSUTF8StringEncoding] error:&error];
-
-                NSLog(@"IOS >> Sending Data");
-
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (success != YES || error != nil) {
-                        NSLog(@"IOS >> Failed to send");
-                        UIAlertView *errorAlert = [[UIAlertView alloc] initWithTitle:@"Error" message:[error localizedDescription] delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil];
-                        [errorAlert show];
-                    }
-                });
-                [thePrinterConn close];
-                resolve((id)kCFBooleanTrue);
-            } else {
-                NSLog(@"IOS >> Failed to connect");
-                resolve((id)kCFBooleanFalse);
-            }
         }
-    });
-}
-
-
-RCT_EXPORT_METHOD(checkPrinterStatus: (NSString *)serialCode
-                            resolver: (RCTPromiseResolveBlock)resolve
-                            rejector: (RCTPromiseRejectBlock)reject) {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^ {
-        id<ZebraPrinterConnection, NSObject> connection = [[MfiBtPrinterConnection alloc] initWithSerialNumber:serialCode];
-        [((MfiBtPrinterConnection*)connection) setTimeToWaitAfterWriteInMilliseconds:80];
-        BOOL success = [connection open];
-        if (success) {
-            NSError *error = nil;
-            [SGD SET:@"device.languages" withValue:@"zpl" andWithPrinterConnection:connection error:&error];
-            [SGD SET:@"ezpl.media_type" withValue:@"continuous" andWithPrinterConnection:connection error:&error];
-            [SGD SET:@"zpl.label_length" withValue:@"100" andWithPrinterConnection:connection error:&error];
-            if (error) {
-                NSLog(@"asssddd %@", error.localizedDescription);
-                resolve((id)kCFBooleanFalse);
-                return;
-            }
+        else if ([printer valueForKey:@"type"] == @"TCP") {
+            thePrinterConn = [[TcpPrinterConnection alloc] initWithAddress:[printer valueForKey:@"address"] 
+                                                               andWithPort:(NSInteger)[printer valueForKey:@"port"]];
         }
-        if (success) {
+
+        BOOL success = [thePrinterConn open];
+
+        if(success == YES){
             NSError *error = nil;
-            id<ZebraPrinter, NSObject> printer = [ZebraPrinterFactory getInstance:connection error:&error];
-            if (error) {
-                NSLog(@"%@", error.localizedDescription);
-                [connection close];
-                resolve((id)kCFBooleanFalse);
-                return;
-            }
+            success = [thePrinterConn write:[command dataUsingEncoding:NSUTF8StringEncoding] error:&error];
 
-            PrinterStatus *status = [printer getCurrentStatus:&error];
-            if (error) {
-                NSLog(@"wtf %@", error.localizedDescription);
-                [connection close];
-                resolve((id)kCFBooleanFalse);
-                return;
-            }
-
-            NSLog(@"Is printer ready to print: %d", (int)status.isReadyToPrint);
-            [connection close];
-            resolve(status.isReadyToPrint ? (id)kCFBooleanTrue : (id)kCFBooleanFalse);
+            NSLog(@"IOS >> Sending Data");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (success != YES || error != nil) {
+                    NSLog(@"IOS >> Failed to send");
+                    NSLog([error localizedDescription]);
+                }
+            });
+            [thePrinterConn close];
+            resolve((id)kCFBooleanTrue);
         } else {
-            [connection close];
+            NSLog(@"IOS >> Failed to connect");
             resolve((id)kCFBooleanFalse);
-            NSLog(@"Failed to connect to printer");
         }
     });
 }

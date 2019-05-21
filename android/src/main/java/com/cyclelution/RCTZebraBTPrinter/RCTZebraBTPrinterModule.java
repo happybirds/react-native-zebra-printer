@@ -26,11 +26,12 @@ import com.facebook.react.bridge.Callback;
 
 import com.zebra.sdk.btleComm.BluetoothLeConnection;
 import com.zebra.sdk.btleComm.BluetoothLeDiscoverer;
+import com.zebra.sdk.btleComm.DiscoveredPrinterBluetoothLe;
 
 import com.zebra.sdk.comm.BluetoothConnection;
-import com.zebra.sdk.comm.BluetoothConnectionInsecure;
 import com.zebra.sdk.comm.Connection;
 import com.zebra.sdk.comm.ConnectionException;
+import com.zebra.sdk.comm.TcpConnection;
 
 import com.zebra.sdk.printer.PrinterLanguage;
 import com.zebra.sdk.printer.ZebraPrinter;
@@ -41,6 +42,9 @@ import com.zebra.sdk.printer.discovery.DeviceFilter;
 import com.zebra.sdk.printer.discovery.DiscoveryHandler;
 import com.zebra.sdk.printer.discovery.DiscoveryHandlerLinkOsOnly;
 import com.zebra.sdk.printer.discovery.DiscoveredPrinter;
+import com.zebra.sdk.printer.discovery.DiscoveredPrinterBluetooth;
+import com.zebra.sdk.printer.discovery.DiscoveredPrinterNetwork;
+import com.zebra.sdk.printer.discovery.NetworkDiscoverer;
 
 import static com.cyclelution.RCTZebraBTPrinter.RCTZebraBTPrinterPackage.TAG;
 
@@ -82,14 +86,26 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
       
               public void foundPrinter(DiscoveredPrinter printer) {
                 if (D) Log.d(TAG, "Bluetooth discovery has found a printer");
+                String type = "";
+                if (printer instanceof DiscoveredPrinterBluetooth) 
+                  type = "BT";
+                else if (orinter instanceof DiscoveredPrinterBluetoothLe)
+                  type = "BTLE";
+                else if (printer instanceof DiscoveredPrinterNetwork) 
+                  type = "TCP";
                 WritableMap printerInfo = new WritableNativeMap();
-                printerInfo.putString("type", "Bluetooth");
+                printerInfo.putString("type", type);
                 printerInfo.putString("address", printer.address);
                 printers.pushMap(printerInfo);
               }
             };
             if (D) Log.d(TAG, "Looking for printers");
-            BluetoothLeDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
+            if ("BT".equals(printerInfo.getString("type"))) 
+              BluetoothDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
+            if ("BTLE".equals(printerInfo.getString("type"))) 
+              BluetoothLeDiscoverer.findPrinters(reactContext, new DiscoveryHandlerLinkOsOnly(handler));
+            if ("TCP".equals(printerInfo.getString("type"))) 
+              NetworkDiscoverer.findPrinters(new DiscoveryHandlerLinkOsOnly(handler));
           } catch (Exception e) {
             if (D) Log.d(TAG, "Failed to find bluetooth printers");
           }
@@ -101,28 +117,27 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     public void printLabel(final ReadableMap printerInfo, final String command, final Promise response) {
       new Thread(new Runnable() {
         public void run() {
-          if ("Bluetooth".equals(printerInfo.getString("type"))) {
-            printerConnection = null;
+          printerConnection = null;
+          if ("BT".equals(printerInfo.getString("type"))) 
+            printerConnection = new BluetoothConnection(printerInfo.getString("address"));
+          if ("BTLE".equals(printerInfo.getString("type"))) 
             printerConnection = new BluetoothLeConnection(printerInfo.getString("address"), reactContext);
+          if ("TCP".equals(printerInfo.getString("type"))) 
+            printerConnection = new TcpConnection(printerInfo.getString("address"), TcpConnection.DEFAULT_ZPL_TCP_PORT);
 
+          try {
+            printerConnection.open();
             try {
-              printerConnection.open();
-              try {
-                printerConnection.write(command.getBytes());
-                if (printerConnection instanceof BluetoothConnection) {
-                  String friendlyName = ((BluetoothConnection) printerConnection).getFriendlyName();
-                  if (D) Log.d(TAG, "printLabel printed with " + friendlyName);
-                }
-              } catch (ConnectionException e) {
-                response.resolve(false);
-              } finally {
-                printerConnection.close();
-                response.resolve(true);
-              }
-            } catch ( ConnectionException e) {
+              printerConnection.write(command.getBytes());
+            } catch (ConnectionException e) {
               response.resolve(false);
+            } finally {
+              printerConnection.close();
+              response.resolve(true);
             }
-          }  
+          } catch ( ConnectionException e) {
+            response.resolve(false);
+          }
         }
       }).start();          
     }

@@ -44,7 +44,6 @@ API:
 | Method        | Description   |
 | ------------- | ------------- |
 | `printLabel(printerSerial, userCommand)`  | Prints data on zebra bt printer. `userCommand` is presented in CPCL printer programming language. Returns a promise with result  |
-| `checkPrinterStatus(printerSerial)`  | Checks if printer is ready to print. Returns a promise with result  |
 
 You must pair your printer first with the device.
 
@@ -70,11 +69,6 @@ import ZebraBTPrinter from 'react-native-zebra-bt-printer';
 const printLabel = async(userPrintCount, userText1, userText2, userText3) => {
 
 	console.log('printLabel APP');
-
-	// if (userText1 === '') {
-	// 	Alert.alert('Your label seems to be missing content!');
-	// 	return false;
-	// }
 
 	try {
 
