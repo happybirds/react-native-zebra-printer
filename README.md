@@ -1,7 +1,9 @@
 
-# react-native-zebra-bt-printer
+# react-native-zebra-printer
 
-This library is built for react native to work with Portable Zebra Bluetooth Printers. This library uses the libraries provided by Zebra. It has been tested with the QLN220, but should work with other QLN series printers that have bluetooth (non BLE mode).
+This library is built for react native to work with Portable Zebra Bluetooth Printers. This library uses the libraries provided by Zebra. It has been tested with the QLN220 and ZD410, but it may also work with printers connected over bluetooth, bluetooth le or wi-fi.
+
+It is heavily inspired on `react-native-zebra-bt-printer`.
 
 ## Getting started
 
