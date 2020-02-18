@@ -15,7 +15,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.ReadableMap;
+
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableNativeArray;
@@ -65,76 +65,22 @@ public class RCTZebraBTPrinterModule extends ReactContextBaseJavaModule {
     public RCTZebraBTPrinterModule(ReactApplicationContext reactContext) {
         super(reactContext);
 
-        if (D) Log.d(TAG, "Bluetooth module started");
-
         this.reactContext = reactContext;
     }
 
-    @ReactMethod 
-    public void portDiscovery(final String type, final Promise response) {
-      new Thread(new Runnable() {
-        public void run() {
-          try {
-            final WritableArray printers = new WritableNativeArray();
-            DiscoveryHandler handler = new DiscoveryHandler() {
-              public void discoveryError(String message) {
-                if (D) Log.d(TAG, "Bluetooth discovery erroed");
-              }
-      
-              public void discoveryFinished() {
-                if (D) Log.d(TAG, "Bluetooth discovery finished");
-                response.resolve(printers);
-              }
-      
-              public void foundPrinter(DiscoveredPrinter printer) {
-                String type = "";
-                if (printer instanceof DiscoveredPrinterBluetooth) 
-                  type = "BT";
-                else if (printer instanceof DiscoveredPrinterBluetoothLe)
-                  type = "BTLE";
-                else if (printer instanceof DiscoveredPrinterNetwork) 
-                  type = "TCP";
-                WritableMap printerInfo = new WritableNativeMap();
-                printerInfo.putString("type", type);
-                printerInfo.putString("address", printer.address);
-                printers.pushMap(printerInfo);
-                if (D) Log.d(TAG, "Bluetooth discovery has found a printer connected over " + type + " at " + printer.address);
-              }
-            };
-            if (D) Log.d(TAG, "Looking for printers");
-            Looper.prepare();
-            if ("BT".equals(type)) 
-              BluetoothDiscoverer.findPrinters(reactContext, handler);
-            else if ("BTLE".equals(type)) 
-              BluetoothLeDiscoverer.findPrinters(reactContext, handler);
-            else if ("TCP".equals(type)) 
-              NetworkDiscoverer.findPrinters(handler);
-          } catch (Exception e) {
-            if (D) Log.d(TAG, "Failed to find bluetooth printers");
-          } finally {
-            Looper.myLooper().quit();
-          }
-        }
-      }).start();
-    }
-
     @ReactMethod
-    public void printLabel(final ReadableMap printerInfo, final String command, final Promise response) {
+    public void printLabel(final String address, final Integer port, final String command, final Promise response) {
       new Thread(new Runnable() {
         public void run() {
           printerConnection = null;
-          if ("BT".equals(printerInfo.getString("type"))) 
-            printerConnection = new BluetoothConnection(printerInfo.getString("address"));
-          else if ("BTLE".equals(printerInfo.getString("type"))) 
-            printerConnection = new BluetoothLeConnection(printerInfo.getString("address"), reactContext);
-          else if ("TCP".equals(printerInfo.getString("type"))) 
-            printerConnection = new TcpConnection(printerInfo.getString("address"), TcpConnection.DEFAULT_ZPL_TCP_PORT);
+       
+            printerConnection = new TcpConnection(address, port);
 
           try {
             printerConnection.open();
             try {
-              printerConnection.write(command.getBytes());
-            } catch (ConnectionException e) {
+               printerConnection.write(command.getBytes());
+            } catch (Exception e) {
               response.resolve(false);
             } finally {
               printerConnection.close();
