@@ -6,8 +6,8 @@
 //  Copyright © 2016 Jakub Martyčák. All rights reserved.
 //
 
-#import <React/RCTBridgeModule.h>
-#import <React/RCTEventDispatcher.h>
+#import <RCTBridgeModule.h>
+#import <RCTEventDispatcher.h>
 
 @interface RCTZebraBTPrinter : NSObject <RCTBridgeModule> {
 	
